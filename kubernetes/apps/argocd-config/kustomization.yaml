@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+    - argocd-cm.yaml
+    - argocd-cmd-params-cm.yaml
+    - argocd-rbac-cm.yaml
+    - argocd-ingress.yaml
+    # Generate first with ./reseal-github-oauth.sh, then uncomment:
+    - github-oauth-sealedsecret.yaml

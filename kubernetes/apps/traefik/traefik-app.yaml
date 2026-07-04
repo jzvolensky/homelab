@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://traefik.github.io/charts
+    chart: traefik
+    targetRevision: 41.0.1 # check https://github.com/traefik/traefik-helm-chart/releases
+    helm:
+      valuesObject:
+        # Talos has no cloud LoadBalancer; expose Traefik on fixed NodePorts so the
+        # node-level cloudflared can reach it at localhost:30080 (web) / :30443.
+        service:
+          type: NodePort
+        ports:
+          web:
+            nodePort: 30080
+          websecure:
+            nodePort: 30443
+        # Own the default IngressClass named "traefik" (what our Ingresses reference).
+        ingressClass:
+          enabled: true
+          isDefaultClass: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

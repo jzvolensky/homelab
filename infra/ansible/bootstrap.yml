@@ -13,8 +13,8 @@
   gather_facts: false
   vars:
     kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/homelab.yaml', true) }}"
-    argocd_version: "v2.13.2" # pin; check https://github.com/argoproj/argo-cd/releases
-    sealed_secrets_version: "0.27.3"
+    argocd_version: "v3.4.4" # pin; check https://github.com/argoproj/argo-cd/releases
+    sealed_secrets_version: "0.38.4" # check https://github.com/bitnami-labs/sealed-secrets/releases
     root_app_manifest: "../../kubernetes/bootstrap/root-app.yaml"
   roles:
     - argocd_bootstrap

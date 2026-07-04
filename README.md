@@ -50,14 +50,6 @@ uv run ansible-galaxy collection install -r requirements.yml
 uv run ansible-playbook bootstrap.yml
 ```
 
-Full walkthrough in [`docs/`](docs/01-prerequisites.md):
-
-1. [Prerequisites](docs/01-prerequisites.md) — tools, Proxmox API token, static IP
-2. [Proxmox & Talos](docs/02-proxmox-and-talos.md) — provisioning, how Talos replaces cloud-init
-3. [GitOps bootstrap](docs/03-gitops-bootstrap.md) — Argo CD + sealed-secrets
-4. [Cloudflare Tunnel](docs/04-cloudflare-tunnel.md) — expose the website
-6. [talosctl cheatsheet](docs/06-talosctl-cheatsheet.md) — day-2 commands: access, check, list, logs, upgrade
-
 ## Notes
 
 - **Terraform state holds cluster secrets** (Talos CA/tokens). `*.tfstate` and

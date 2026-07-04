@@ -1,11 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-# Each app is its own Argo CD Application (app-of-apps pattern). Add resources
-# here as you migrate manifests over from the old homelab-deployments repo, e.g.:
-#   - cert-manager/application.yaml
-#   - monitoring/application.yaml
-#   - tailscale/application.yaml
-#   - rustfs/application.yaml
-#   - webserver/application.yaml
-#   - cloudflared/application.yaml
-resources: []
+# Each entry is an Argo CD Application (app-of-apps). The root app syncs these;
+# each Application then deploys its own workload. Add apps as you migrate them
+# from the old homelab-deployments repo.
+resources:
+    - traefik/traefik-app.yaml # ingress controller (Helm)
+    - argocd-config/argocd-config-app.yaml # expose argocd + GitHub OAuth

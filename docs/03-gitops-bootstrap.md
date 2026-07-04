@@ -42,7 +42,7 @@ key is new). Fetch the public cert once and reuse your existing
 
 ```bash
 kubeseal --fetch-cert \
-  --controller-name sealed-secrets \
+  --controller-name sealed-secrets-controller \
   --controller-namespace kube-system > pub-cert.pem
 ```
 

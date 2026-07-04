@@ -50,7 +50,7 @@ Seal the token:
 kubectl create secret generic cloudflared-token \
   --namespace cloudflared \
   --from-literal=tunnelToken='<TOKEN>' --dry-run=client -o yaml \
-| kubeseal --controller-name sealed-secrets --controller-namespace kube-system \
+| kubeseal --controller-name sealed-secrets-controller --controller-namespace kube-system \
   -o yaml > kubernetes/apps/cloudflared/cloudflared-token-sealed.yaml
 ```
 
