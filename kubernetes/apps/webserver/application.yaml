@@ -6,7 +6,7 @@ metadata:
     finalizers:
         - resources-finalizer.argocd.argoproj.io
 spec:
-    project: homelab-eppan
+    project: default
     source:
         repoURL: git@github.com:jzvolensky/homelab
         targetRevision: main
