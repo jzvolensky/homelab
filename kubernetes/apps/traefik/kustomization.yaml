@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Each entry is an Argo CD Application (app-of-apps). The root app syncs these;
+# each Application then deploys its own workload. Add apps as you migrate them
+# from the old homelab-deployments repo.
+resources:
+    - namespace.yaml
+    - traefik-app.yaml
