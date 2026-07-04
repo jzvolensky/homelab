@@ -1,17 +1,19 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: argocd-rbac-cm
-  namespace: argocd
-  labels:
-    app.kubernetes.io/name: argocd-rbac-cm
-    app.kubernetes.io/part-of: argocd
+    name: argocd-rbac-cm
+    namespace: argocd
+    labels:
+        app.kubernetes.io/name: argocd-rbac-cm
+        app.kubernetes.io/part-of: argocd
 data:
-  # Argo CD matches SSO identities by the `sub` claim + any claims in `scopes`.
-  # GitHub-via-Dex gives a NUMERIC sub (not your login), so grant that directly;
-  # adding `email` to scopes lets the readable email grant work too.
-  scopes: '[groups, email]'
-  policy.csv: |
-    g, 120667628, role:admin                   # GitHub numeric user id (the `sub` from the error)
-    g, juro.zvolensky@gmail.com, role:admin    # email (matchable because of scopes above)
-  policy.default: role:readonly
+    # Argo CD matches SSO identities by the `sub` claim + any claims in `scopes`.
+    # GitHub-via-Dex gives a NUMERIC sub (not your login), so grant that directly;
+    # adding `email` to scopes lets the readable email grant work too.
+    # NOTE: casbin only honors `#` comments at the START of a line — never trailing
+    # a policy line, or it corrupts the role value.
+    scopes: "[groups, email]"
+    policy.csv: |
+        g, 120667628, role:admin
+        g, juro.zvolensky@gmail.com, role:admin
+    policy.default: role:readonly

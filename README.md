@@ -1,5 +1,8 @@
 # homelab
 
+> [!WARNING]  
+> This is heavily customized to my needs and interest. If you want to reuse some of this, expect to adapt it to your own environment and preferences.
+
 Infrastructure-as-code for a **single-node Talos Linux Kubernetes** cluster on
 Proxmox, deployed remotely from a workstation, with GitOps (Argo CD) on top.
 
