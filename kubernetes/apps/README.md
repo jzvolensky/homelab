@@ -19,6 +19,3 @@ The old manifests are Talos-compatible as-is (they target
 - **Storage:** Talos has no host-path/local storage by default (immutable OS).
   For PVCs, add a CSI — `local-path-provisioner`, Longhorn, or OpenEBS — as its
   own app here. Workloads backed by rustfs/S3 need nothing extra.
-- **Ingress / Cloudflare Tunnel:** run `cloudflared` in-cluster as a Deployment
-  (no inbound port-forwarding needed — perfect behind home NAT). See
-  `docs/04-cloudflare-tunnel.md`.
