@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
     name: webserver-rs
-    namespace: webserver-rs
+    namespace: argocd
     finalizers:
         - resources-finalizer.argocd.argoproj.io
 spec:
@@ -13,7 +13,7 @@ spec:
         path: kubernetes/apps/webserver
     destination:
         server: https://kubernetes.default.svc
-        namespace: argocd
+        namespace: webserver-rs
     syncPolicy:
         automated:
             prune: true
