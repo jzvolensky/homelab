@@ -4,10 +4,16 @@ metadata:
   name: argocd-server
   namespace: argocd
   annotations:
-    # Cloudflare terminates TLS; traffic arrives as plain HTTP on the web entrypoint.
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # websecure = Traefik terminates TLS (default self-signed cert) so cloudflared
+    # can reach the origin over HTTPS; web kept as an http fallback on :30080.
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
   ingressClassName: traefik
+  tls:
+    # No secretName → Traefik serves its built-in default cert (cloudflared uses
+    # "No TLS Verify" since it's self-signed; the tunnel is already encrypted).
+    - hosts:
+        - argocd.jzvolensky.com
   rules:
     - host: argocd.jzvolensky.com
       http:
