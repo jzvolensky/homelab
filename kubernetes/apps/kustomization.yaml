@@ -6,3 +6,4 @@ kind: Kustomization
 resources:
     - traefik/traefik-app.yaml # ingress controller (Helm)
     - argocd-config/argocd-config-app.yaml # expose argocd + GitHub OAuth
+    - webserver/application.yaml # website
