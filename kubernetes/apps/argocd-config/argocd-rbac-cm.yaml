@@ -7,7 +7,11 @@ metadata:
     app.kubernetes.io/name: argocd-rbac-cm
     app.kubernetes.io/part-of: argocd
 data:
-  # GitHub user jzvolensky -> full admin. Everyone else authenticated -> read-only.
+  # Argo CD matches SSO identities by the `sub` claim + any claims in `scopes`.
+  # GitHub-via-Dex gives a NUMERIC sub (not your login), so grant that directly;
+  # adding `email` to scopes lets the readable email grant work too.
+  scopes: '[groups, email]'
   policy.csv: |
-    g, jzvolensky, role:admin
+    g, 120667628, role:admin                   # GitHub numeric user id (the `sub` from the error)
+    g, juro.zvolensky@gmail.com, role:admin    # email (matchable because of scopes above)
   policy.default: role:readonly
