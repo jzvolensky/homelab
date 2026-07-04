@@ -1,0 +1,20 @@
+---
+# Bootstraps the GitOps layer onto a freshly-provisioned Talos cluster:
+#   1. sealed-secrets controller (so encrypted secrets in Git can be decrypted)
+#   2. Argo CD
+#   3. the root "app of apps" that points Argo CD at kubernetes/apps in this repo
+#
+# After this runs, Argo CD manages everything else — you should rarely run it again.
+#
+#   export KUBECONFIG=~/.kube/homelab.yaml
+#   uv run ansible-playbook bootstrap.yml
+- name: Bootstrap Argo CD + sealed-secrets
+  hosts: local
+  gather_facts: false
+  vars:
+    kubeconfig: "{{ lookup('env', 'KUBECONFIG') | default('~/.kube/homelab.yaml', true) }}"
+    argocd_version: "v2.13.2" # pin; check https://github.com/argoproj/argo-cd/releases
+    sealed_secrets_version: "0.27.3"
+    root_app_manifest: "../../kubernetes/bootstrap/root-app.yaml"
+  roles:
+    - argocd_bootstrap

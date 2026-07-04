@@ -1,0 +1,16 @@
+# ExtensionServiceConfig for the cloudflared Talos extension.
+# Copy to cloudflared.yaml (gitignored) and fill in the tunnel token, then apply.
+#
+# Runs your Cloudflare Tunnel as a host-level service on the node (outbound-only,
+# no port-forwarding). Create the tunnel + token in the Cloudflare Zero Trust
+# dashboard (Networks -> Tunnels -> Create, type "Cloudflared"), then map public
+# hostnames to in-cluster Services (e.g. http://webserver.default.svc:80).
+#
+# NOTE: verify the exact config keys against your cloudflared extension's README
+# on factory.talos.dev — some builds expect TUNNEL_TOKEN as env (below), others
+# want a mounted config.yml + credentials file. The token form is most common.
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: cloudflared
+environment:
+  - TUNNEL_TOKEN=<ADD TOKEN>

@@ -1,0 +1,46 @@
+---
+- name: Ensure required Python libs are importable (installed via uv)
+  ansible.builtin.command: "{{ ansible_python_interpreter | default('python3') }} -c 'import kubernetes'"
+  changed_when: false
+
+- name: Install sealed-secrets controller (release manifest, no helm needed)
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    namespace: kube-system
+    state: present
+    src: "https://github.com/bitnami-labs/sealed-secrets/releases/download/v{{ sealed_secrets_version }}/controller.yaml"
+
+- name: Create argocd namespace
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: argocd
+
+- name: Install Argo CD (upstream manifests)
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    namespace: argocd
+    state: present
+    src: "https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml"
+
+- name: Wait for Argo CD server to be available
+  kubernetes.core.k8s_info:
+    kubeconfig: "{{ kubeconfig }}"
+    kind: Deployment
+    namespace: argocd
+    name: argocd-server
+    wait: true
+    wait_condition:
+      type: Available
+      status: "True"
+    wait_timeout: 300
+
+- name: Apply the root app-of-apps
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    src: "{{ root_app_manifest }}"

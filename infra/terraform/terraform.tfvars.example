@@ -1,0 +1,31 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored.
+
+# --- Proxmox ---
+proxmox_endpoint = "https://192.168.1.200:8006/"
+proxmox_username = "root@pam"
+proxmox_password = "REPLACE-WITH-YOUR-PVE-PASSWORD"
+proxmox_insecure = true
+proxmox_node     = "pve"
+
+# --- Datastores / network (match names shown in the PVE UI) ---
+iso_datastore  = "local"
+vm_datastore   = "local-lvm"
+network_bridge = "vmbr0"
+
+# --- Talos image ---
+talos_version = "v1.9.5"
+# Regenerate at https://factory.talos.dev if you want more system extensions.
+talos_schematic_id = "ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515"
+
+# --- VM sizing ---
+vm_id        = 200
+vm_name      = "talos-cp-01"
+vm_cpu       = 6
+vm_memory    = 16384
+vm_disk_size = 200
+
+# --- Cluster networking (pick a free static IP on your LAN) ---
+cluster_name = "homelab"
+node_ip      = "192.168.1.50"
+node_cidr    = 24
+gateway      = "192.168.1.1"

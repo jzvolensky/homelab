@@ -1,0 +1,17 @@
+[project]
+name = "homelab-ansible"
+version = "0.1.0"
+description = "Day-2 in-cluster bootstrap for the Talos homelab (run with uv)"
+requires-python = ">=3.11"
+dependencies = [
+    "ansible-core>=2.16",
+    # Required by the kubernetes.core collection used in bootstrap.yml
+    "kubernetes>=29.0",
+    "jsonpatch>=1.33",
+    "PyYAML>=6.0",
+]
+
+# Usage:
+#   uv sync
+#   uv run ansible-galaxy collection install -r requirements.yml
+#   uv run ansible-playbook bootstrap.yml

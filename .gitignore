@@ -216,3 +216,36 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Homelab infra ---
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Ansible / uv
+infra/ansible/.ansible/
+infra/ansible/.venv/
+uv.lock
+
+# Cluster credentials — NEVER commit
+kubeconfig
+*.kubeconfig
+talosconfig
+*.talosconfig
+pub-cert.pem
+
+# Talos extension-service configs (contain secrets) — keep only *.example
+infra/talos/extension-services/*.yaml
+!infra/talos/extension-services/*.yaml.example

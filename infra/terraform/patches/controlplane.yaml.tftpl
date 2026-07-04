@@ -1,0 +1,25 @@
+# Talos machine config patch — merged onto the generated controlplane config.
+# Single-node cluster: the control plane also runs workloads.
+machine:
+  install:
+    disk: ${install_disk}
+    # Install from the FACTORY installer (our schematic) so the on-disk system
+    # keeps the qemu-guest-agent extension and matches our Talos version. Without
+    # this the provider defaults to the plain installer (no extensions, older ver).
+    image: factory.talos.dev/installer/${schematic_id}:${talos_version}
+  network:
+    # Select the NIC by MAC (pulled from the Proxmox VM), not by name — Talos on
+    # Proxmox names it "ens18", not "eth0", and this stays correct if that changes.
+    interfaces:
+      - deviceSelector:
+          hardwareAddr: "${mac_address}"
+        dhcp: false
+        addresses:
+          - ${node_ip}/${node_cidr}
+        routes:
+          - network: 0.0.0.0/0
+            gateway: ${gateway}
+cluster:
+  # Single node: allow scheduling ordinary pods onto the control plane.
+  allowSchedulingOnControlPlanes: true
+  # Flannel + kube-proxy are Talos defaults and fine to start with.

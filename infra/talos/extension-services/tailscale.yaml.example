@@ -1,0 +1,16 @@
+# ExtensionServiceConfig for the tailscale Talos extension.
+# Copy to tailscale.yaml (gitignored) and fill in TS_AUTHKEY, then apply (see README).
+#
+# This makes the NODE ITSELF join your tailnet — you can then reach the node and
+# the Kubernetes API over Tailscale, even if other networking is down.
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: tailscale
+environment:
+  # Generate an auth key at https://login.tailscale.com/admin/settings/keys
+  # (reusable + ephemeral recommended; add a tag like tag:homelab).
+  - TS_AUTHKEY=<ADD YOUR AUTH KEY HERE>
+  # --- optional extras (uncomment as needed) ---
+  # Advertise cluster CIDRs so the tailnet can reach pods/services (subnet router):
+  #- TS_ROUTES=10.244.0.0/16,10.96.0.0/12
+  #- TS_EXTRA_ARGS=--advertise-tags=tag:k8s --hostname=talos-homelab
