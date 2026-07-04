@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# Re-seal the GitHub OAuth client secret against THIS cluster's sealed-secrets key.
+# Re-seal the GitHub OAuth client ID + secret against THIS cluster's sealed-secrets key.
 # The old repo's SealedSecret ciphertext will NOT decrypt here (new cluster = new key).
 #
 #   export KUBECONFIG=~/.kube/homelab.yaml
+#   export GITHUB_CLIENT_ID='<client ID from the GitHub OAuth app>'
 #   export GITHUB_CLIENT_SECRET='<client secret from the GitHub OAuth app>'
 #   ./reseal-github-oauth.sh
 #
 # Produces github-oauth-sealedsecret.yaml (safe to commit). The resulting Secret is
-# labeled part-of: argocd so Argo CD's $github-oauth:dex.github.clientSecret works.
+# labeled part-of: argocd so Argo CD's $github-oauth:dex.github.client{ID,Secret} works.
 set -euo pipefail
+: "${GITHUB_CLIENT_ID:?export GITHUB_CLIENT_ID to your GitHub OAuth app client ID}"
 : "${GITHUB_CLIENT_SECRET:?export GITHUB_CLIENT_SECRET to your GitHub OAuth app client secret}"
 cd "$(dirname "$0")"
 
 kubectl create secret generic github-oauth -n argocd \
+  --from-literal=dex.github.clientID="$GITHUB_CLIENT_ID" \
   --from-literal=dex.github.clientSecret="$GITHUB_CLIENT_SECRET" \
   --dry-run=client -o yaml \
 | kubectl label --local -f - app.kubernetes.io/part-of=argocd --dry-run=client -o yaml \

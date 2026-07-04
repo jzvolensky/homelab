@@ -15,10 +15,11 @@ Manifests:
 
 ## One-time setup
 
-### 1. Re-seal the GitHub OAuth client secret
+### 1. Re-seal the GitHub OAuth client ID + secret
 ```bash
 export KUBECONFIG=~/.kube/homelab.yaml
-export GITHUB_CLIENT_SECRET='<client secret of GitHub OAuth app Ov23lixAkPtlc2fa5uOI>'
+export GITHUB_CLIENT_ID='<client ID of the GitHub OAuth app>'
+export GITHUB_CLIENT_SECRET='<client secret of the GitHub OAuth app>'
 ./reseal-github-oauth.sh
 # then uncomment github-oauth-sealedsecret.yaml in kustomization.yaml
 ```

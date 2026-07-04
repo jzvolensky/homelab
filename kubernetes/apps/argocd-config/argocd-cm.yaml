@@ -1,22 +1,23 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: argocd-cm
-  namespace: argocd
-  labels:
-    app.kubernetes.io/name: argocd-cm
-    app.kubernetes.io/part-of: argocd
+    name: argocd-cm
+    namespace: argocd
+    labels:
+        app.kubernetes.io/name: argocd-cm
+        app.kubernetes.io/part-of: argocd
 data:
-  # External URL — used for OAuth callbacks and UI links.
-  url: https://argocd.jzvolensky.com
-  # GitHub OAuth via Dex. clientSecret is pulled from the github-oauth Secret
-  # ($<secret-name>:<key>); that Secret must carry the part-of: argocd label
-  # (the SealedSecret template sets it — see reseal-github-oauth.sh).
-  dex.config: |
-    connectors:
-      - type: github
-        id: github
-        name: GitHub
-        config:
-          clientID: Ov23lixAkPtlc2fa5uOI
-          clientSecret: $github-oauth:dex.github.clientSecret
+    # External URL — used for OAuth callbacks and UI links.
+    url: https://argocd.jzvolensky.com
+    # GitHub OAuth via Dex. clientID and clientSecret are both pulled from the
+    # github-oauth Secret ($<secret-name>:<key>); that Secret must carry the
+    # part-of: argocd label (the SealedSecret template sets it — see
+    # reseal-github-oauth.sh).
+    dex.config: |
+        connectors:
+          - type: github
+            id: github
+            name: GitHub
+            config:
+              clientID: $github-oauth:dex.github.clientID
+              clientSecret: $github-oauth:dex.github.clientSecret
