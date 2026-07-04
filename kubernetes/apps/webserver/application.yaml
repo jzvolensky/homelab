@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
     name: webserver-rs
-    namespace: argocd
+    namespace: webserver-rs
     finalizers:
         - resources-finalizer.argocd.argoproj.io
 spec:

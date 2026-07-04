@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: webserver-rs
-  namespace: argocd
+    name: webserver-rs
+    namespace: webserver-rs
 spec:
-  type: ClusterIP
-  ports:
-    - port: 80
-      targetPort: 3000
-      protocol: TCP
-  selector:
-    app: webserver-rs
+    type: ClusterIP
+    ports:
+        - port: 80
+          targetPort: 3000
+          protocol: TCP
+    selector:
+        app: webserver-rs
