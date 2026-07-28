@@ -6,6 +6,10 @@ resource "proxmox_virtual_environment_vm" "talos_cp" {
   description = "Talos control-plane / single-node k8s (managed by Terraform)"
   tags        = ["talos", "kubernetes", "terraform"]
 
+  # Single-node cluster: everything depends on this VM coming back after a
+  # host reboot (matches `qm set 100 -onboot 1` applied by hand).
+  on_boot = true
+
   # qemu-guest-agent ships via the Talos schematic extension; this lets Terraform
   # read the VM's DHCP address during maintenance mode (see talos.tf).
   agent {
@@ -18,7 +22,20 @@ resource "proxmox_virtual_environment_vm" "talos_cp" {
   }
 
   memory {
+    # With hostpci passthrough QEMU pins all guest RAM, so vm_memory must leave
+    # headroom for the Proxmox host itself (20480 on the 32 GB box).
     dedicated = var.vm_memory
+    floating  = 0 # ballooning is meaningless with pinned memory
+  }
+
+  # PCIe passthrough of the Radeon 780M iGPU (vfio-bound on the host) for
+  # Vulkan LLM inference in-cluster. Requires machine = q35.
+  machine = "q35"
+
+  hostpci {
+    device = "hostpci0"
+    id     = "0000:c4:00.0"
+    pcie   = true
   }
 
   # Boot ISO (Talos maintenance mode). Kept attached; Talos installs to the disk

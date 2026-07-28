@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: llama-server
+    namespace: llm
+spec:
+    replicas: 1
+    # Recreate: the node can't fit two model copies in RAM during a rolling update.
+    strategy:
+        type: Recreate
+    selector:
+        matchLabels:
+            app: llama-server
+    template:
+        metadata:
+            labels:
+                app: llama-server
+        spec:
+            containers:
+                - name: llama-server
+                  # Vulkan build targeting the passed-through Radeon 780M
+                  # (2 GB VRAM carve + ~10 GB GTT — models up to ~12 GB fit).
+                  image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+                  imagePullPolicy: IfNotPresent
+                  securityContext:
+                      # Simplest way to use /dev/dri on Talos; the namespace
+                      # is PSA-privileged already.
+                      privileged: true
+                  args:
+                      # Model, downloaded from Hugging Face on first start and
+                      # cached in LLAMA_CACHE. Currently the tiny smoke-test
+                      # model (~0.6 GB, Ready in minutes); once GPU inference
+                      # is verified, swap to the real one:
+                      #   Qwen/Qwen3-8B-GGUF:Q4_K_M   (~5 GB)
+                      - -hf
+                      - Qwen/Qwen3-0.6B-GGUF:Q8_0
+                      - --host
+                      - 0.0.0.0
+                      - --port
+                      - "8080"
+                      - --ctx-size
+                      - "8192"
+                      # Offload all layers to the iGPU.
+                      - -ngl
+                      - "99"
+                      # CPU only feeds the GPU now; 4 threads is plenty.
+                      - --threads
+                      - "4"
+                  env:
+                      - name: LLAMA_CACHE
+                        value: /models
+                  ports:
+                      - containerPort: 8080
+                  # First start downloads the model; allow up to 30 min.
+                  startupProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      periodSeconds: 15
+                      failureThreshold: 120
+                  readinessProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      periodSeconds: 10
+                  livenessProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      periodSeconds: 30
+                  resources:
+                      requests:
+                          cpu: "1"
+                          memory: 4Gi
+                      limits:
+                          # Weights live in GPU GTT memory (not charged to the
+                          # pod cgroup); this covers load-time page cache + KV.
+                          memory: 10Gi
+                  volumeMounts:
+                      - name: models
+                        mountPath: /models
+                      - name: dri
+                        mountPath: /dev/dri
+            volumes:
+                # Talos: hostPath must live under /var. Single-node cluster, so
+                # no CSI needed; the cache survives pod restarts and re-syncs.
+                - name: models
+                  hostPath:
+                      path: /var/mnt/models
+                      type: DirectoryOrCreate
+                # Radeon 780M passed through from Proxmox; amdgpu driver via
+                # the Talos schematic's amdgpu extension.
+                - name: dri
+                  hostPath:
+                      path: /dev/dri
+                      type: Directory

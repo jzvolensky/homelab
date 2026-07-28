@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: llm
+    labels:
+        # Talos enforces the "baseline" Pod Security Standard by default, which
+        # forbids hostPath volumes (model cache) and, later, /dev/dri for Vulkan.
+        pod-security.kubernetes.io/enforce: privileged

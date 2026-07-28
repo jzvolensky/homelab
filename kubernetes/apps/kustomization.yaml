@@ -7,3 +7,4 @@ resources:
     - traefik/traefik-app.yaml # ingress controller (Helm)
     - argocd-config/argocd-config-app.yaml # expose argocd + GitHub OAuth
     - webserver/application.yaml # website
+    - llm/application.yaml # llama.cpp OpenAI-compatible LLM server (CPU for now)
