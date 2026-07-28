@@ -31,11 +31,17 @@ The old manifests are Talos-compatible as-is (they target
        Talos land, not in this repo's manifests.
     3. **S3-backed** (rustfs etc.): nothing extra needed.
 
-    example patch for `hostPath`:
+    Additionally the kubelet needs `/var/mnt` in its `extraMounts`, or pods
+    fail with `mkdir /var/mnt/<app>: read-only file system`. Applied once for
+    all of `/var/mnt` (covers every current and future hostPath app; also
+    codified in `infra/terraform/patches/controlplane.yaml.tftpl`):
 
     ```bash
-    talosctl -n <node> patch mc --patch '{"machine":{"kubelet":{"extraMounts":[{"destination":"/var/mnt/models","type":"bind","source":"/var/mnt/models","options":["bind","rshared","rw"]}]}}}'
+    talosctl -n <node> patch mc --patch '{"machine":{"kubelet":{"extraMounts":[{"destination":"/var/mnt","type":"bind","source":"/var/mnt","options":["bind","rshared","rw"]}]}}}'
     ```
+
+    Careful: a patch **replaces** the whole `extraMounts` list — always include
+    every entry you want to keep.
 - **NodePorts only answer on the node's *primary* IP** (kube-proxy runs in
   nftables mode). The kubelet's registered IP is therefore pinned to
   `192.168.1.250` in the machine config (`machine.kubelet.nodeIP.validSubnets`,

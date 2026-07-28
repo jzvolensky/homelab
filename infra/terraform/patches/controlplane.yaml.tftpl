@@ -15,6 +15,17 @@ machine:
     nodeIP:
       validSubnets:
         - ${node_ip}/32
+    # Make /var/mnt writable from the kubelet's mount namespace so hostPath
+    # volumes with DirectoryOrCreate work (kubernetes/apps README, storage).
+    # Without this, pods fail with "mkdir /var/mnt/<app>: read-only file system".
+    extraMounts:
+      - destination: /var/mnt
+        type: bind
+        source: /var/mnt
+        options:
+          - bind
+          - rshared
+          - rw
   network:
     # Select the NIC by MAC (pulled from the Proxmox VM), not by name — Talos on
     # Proxmox names it "ens18", not "eth0", and this stays correct if that changes.
