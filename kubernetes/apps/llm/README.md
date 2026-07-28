@@ -11,7 +11,14 @@ unauthenticated LLM API should not go through the cloudflared tunnel).
   test; the intended daily driver is **Qwen3-8B Q4_K_M** (~5 GB) — swap the
   `-hf` arg in `deployment.yaml` once GPU inference is verified.
 
-## Test it
+## Use it
+
+From any browser on the home network: **http://192.168.1.250:30081** —
+llama-server's built-in chat UI (the same base URL serves the `/v1` API).
+LAN-only: the router doesn't forward this port and the Cloudflare tunnel only
+routes configured hostnames. Anyone on the WiFi can use it — acceptable here.
+
+Or via port-forward from anywhere with the kubeconfig:
 
 ```bash
 kubectl -n llm port-forward svc/llama-server 8080:80

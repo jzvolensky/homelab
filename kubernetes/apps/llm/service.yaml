@@ -4,10 +4,15 @@ metadata:
     name: llama-server
     namespace: llm
 spec:
-    type: ClusterIP
+    # NodePort = reachable on the LAN at http://192.168.1.250:30081 (built-in
+    # chat UI + /v1 API). LAN-only: nothing routes this port from outside, and
+    # kube-proxy (nftables) only answers on the node's pinned primary IP.
+    # In-cluster DNS (llama-server.llm.svc...) keeps working unchanged.
+    type: NodePort
     ports:
         - port: 80
           targetPort: 8080
+          nodePort: 30081
           protocol: TCP
     selector:
         app: llama-server
