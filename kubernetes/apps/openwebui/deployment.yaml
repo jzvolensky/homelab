@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: openwebui
+    namespace: openwebui
+spec:
+    replicas: 1
+    # Single SQLite-backed instance — never run two against the same data dir.
+    strategy:
+        type: Recreate
+    selector:
+        matchLabels:
+            app: openwebui
+    template:
+        metadata:
+            labels:
+                app: openwebui
+        spec:
+            containers:
+                - name: openwebui
+                  # Moving tag; pin to a release tag if an update breaks things.
+                  image: ghcr.io/open-webui/open-webui:main
+                  imagePullPolicy: IfNotPresent
+                  env:
+                      # Backend: the cluster llama-server (OpenAI-compatible).
+                      # More backends (e.g. the Mac) can be added in the admin
+                      # UI under Settings > Connections.
+                      - name: OPENAI_API_BASE_URL
+                        value: http://llama-server.llm.svc.cluster.local/v1
+                      - name: OPENAI_API_KEY
+                        value: sk-local # llama-server checks nothing; must be non-empty
+                      - name: ENABLE_OLLAMA_API
+                        value: "false"
+                      # First account created becomes admin; later signups land
+                      # as "pending" until the admin approves them.
+                      - name: DEFAULT_USER_ROLE
+                        value: pending
+                      - name: WEBUI_URL
+                        value: https://chat.jzvolensky.com
+                  ports:
+                      - containerPort: 8080
+                  startupProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      periodSeconds: 10
+                      failureThreshold: 60 # first boot runs DB migrations
+                  readinessProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      periodSeconds: 15
+                  livenessProbe:
+                      httpGet:
+                          path: /health
+                          port: 8080
+                      periodSeconds: 30
+                  resources:
+                      requests:
+                          cpu: 250m
+                          memory: 512Mi
+                      limits:
+                          memory: 2Gi
+                  volumeMounts:
+                      - name: data
+                        mountPath: /app/backend/data
+            volumes:
+                # Users, chat history, settings — precious enough to back up,
+                # small enough for hostPath (see kubernetes/apps/README.md).
+                - name: data
+                  hostPath:
+                      path: /var/mnt/openwebui
+                      type: DirectoryOrCreate

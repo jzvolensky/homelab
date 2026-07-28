@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: openwebui
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: default
+    source:
+        repoURL: https://github.com/jzvolensky/homelab.git
+        targetRevision: main
+        path: kubernetes/apps/openwebui
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: openwebui
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+            - CreateNamespace=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true
+            - ApplyOutOfSyncOnly=true
+            - RespectIgnoreDifferences=true

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: openwebui
+    labels:
+        # hostPath data volume needs this (Talos defaults to baseline PSS).
+        pod-security.kubernetes.io/enforce: privileged
