@@ -1,0 +1,18 @@
+---
+# Configures the Proxmox HOST for iGPU passthrough (vfio-pci binding).
+# Companion to docs/07-igpu-passthrough.md — stage 1 only; the VM side
+# (q35/hostpci/memory) lives in infra/terraform/vm.tf.
+#
+# Already applied by hand (2026-07-28); this exists so a Proxmox reinstall
+# is one playbook run. Usage:
+#   1. set the host under [proxmox] in inventory.ini
+#   2. uv run ansible-playbook proxmox-vfio.yml
+#   3. reboot the host when prompted (HDMI console dies — by design)
+#
+# Not covered here (manual, see docs/07): BIOS IOMMU/UMA settings, and
+# checking the GPU sits in its own IOMMU group before first use.
+- name: Proxmox host vfio passthrough prep
+  hosts: proxmox
+  gather_facts: false
+  roles:
+    - proxmox_vfio

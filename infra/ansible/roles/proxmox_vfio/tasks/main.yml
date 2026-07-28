@@ -1,0 +1,39 @@
+---
+# Binds the iGPU to vfio-pci at boot so it can be passed through to the Talos
+# VM. Codifies docs/07-igpu-passthrough.md stage 1 (applied by hand on
+# eppan-datacenter, 2026-07-28 — running this against it should report no
+# changes except migrating the hand-added /etc/modules lines is a no-op).
+
+- name: Load vfio modules at boot (/etc/modules)
+  ansible.builtin.lineinfile:
+    path: /etc/modules
+    line: "{{ item }}"
+    state: present
+  loop: "{{ vfio_kernel_modules }}"
+  notify:
+    - Update initramfs
+    - Note reboot required
+
+- name: Bind GPU to vfio-pci, blacklist host driver
+  ansible.builtin.template:
+    src: vfio.conf.j2
+    dest: /etc/modprobe.d/vfio.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Update initramfs
+    - Note reboot required
+
+- name: Report current driver binding (informational)
+  ansible.builtin.shell: |
+    set -o pipefail
+    lspci -nnk | grep -A2 -Ei 'vga|display' | grep -E 'VGA|driver' || true
+  args:
+    executable: /bin/bash
+  register: vfio_binding
+  changed_when: false
+
+- name: Show driver binding
+  ansible.builtin.debug:
+    msg: "{{ vfio_binding.stdout_lines }}"

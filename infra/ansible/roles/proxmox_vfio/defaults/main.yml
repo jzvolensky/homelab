@@ -1,0 +1,16 @@
+---
+# PCI vendor:device IDs vfio-pci should claim at boot.
+# 1002:15bf = Radeon 780M iGPU (Ryzen 7940HS "Phoenix1"); find yours with:
+#   lspci -nn | grep -Ei 'vga|display'
+vfio_pci_ids:
+  - "1002:15bf"
+
+# Host driver(s) to keep away from the passed-through device. Blacklisting
+# amdgpu kills the host's HDMI console — intended (headless, GPU goes to a VM).
+vfio_blacklist_modules:
+  - amdgpu
+
+vfio_kernel_modules:
+  - vfio
+  - vfio_iommu_type1
+  - vfio_pci

@@ -1,0 +1,11 @@
+---
+- name: Update initramfs
+  ansible.builtin.command: update-initramfs -u -k all
+
+- name: Note reboot required
+  ansible.builtin.debug:
+    msg: >-
+      vfio config changed — reboot the Proxmox host, then verify with:
+      lspci -nnk  →  'Kernel driver in use: vfio-pci' on the GPU.
+      WARNING: the host's HDMI console dies after this reboot (by design);
+      make sure web UI (:8006) / SSH work first, and that VMs have onboot set.

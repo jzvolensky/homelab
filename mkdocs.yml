@@ -109,3 +109,4 @@ nav:
   - Cloudflare Tunnel: 04-cloudflare-tunnel.md
   - Talos Extensions: 05-talos-extensions.md
   - talosctl Cheatsheet: 06-talosctl-cheatsheet.md
+  - iGPU Passthrough: 07-igpu-passthrough.md

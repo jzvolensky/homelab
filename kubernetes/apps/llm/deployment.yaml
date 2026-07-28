@@ -16,6 +16,40 @@ spec:
             labels:
                 app: llama-server
         spec:
+            # Fetch the model with curl + SHA-256 verification instead of
+            # llama-server's built-in -hf downloader, whose cache layer
+            # corrupted reads on this image (verified: blob on disk hashed
+            # correct while the loader failed on it).
+            initContainers:
+                - name: fetch-model
+                  image: curlimages/curl:latest
+                  securityContext:
+                      runAsUser: 0 # hostPath is root-owned
+                  env:
+                      # To swap models: change these three AND the -m arg below.
+                      - name: MODEL_URL
+                        value: https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf
+                      - name: MODEL_SHA256
+                        value: 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031
+                      - name: MODEL_FILE
+                        value: Qwen3-0.6B-Q8_0.gguf
+                  command:
+                      - sh
+                      - -c
+                      - |
+                          set -e
+                          F="/models/$MODEL_FILE"
+                          if [ -f "$F" ] && echo "$MODEL_SHA256  $F" | sha256sum -c -; then
+                              echo "model present and verified"
+                              exit 0
+                          fi
+                          echo "downloading $MODEL_URL"
+                          curl -fSL --retry 5 --retry-delay 5 -C - -o "$F.part" "$MODEL_URL"
+                          echo "$MODEL_SHA256  $F.part" | sha256sum -c -
+                          mv "$F.part" "$F"
+                  volumeMounts:
+                      - name: models
+                        mountPath: /models
             containers:
                 - name: llama-server
                   # Vulkan build targeting the passed-through Radeon 780M
@@ -27,13 +61,13 @@ spec:
                       # is PSA-privileged already.
                       privileged: true
                   args:
-                      # Model, downloaded from Hugging Face on first start and
-                      # cached in LLAMA_CACHE. Currently the tiny smoke-test
-                      # model (~0.6 GB, Ready in minutes); once GPU inference
-                      # is verified, swap to the real one:
-                      #   Qwen/Qwen3-8B-GGUF:Q4_K_M   (~5 GB)
-                      - -hf
-                      - Qwen/Qwen3-0.6B-GGUF:Q8_0
+                      # Model file staged by the fetch-model initContainer.
+                      # Currently the tiny smoke-test model; for the real one
+                      # (Qwen3-8B Q4_K_M) see README.md "Swapping models".
+                      - -m
+                      - /models/Qwen3-0.6B-Q8_0.gguf
+                      - --alias
+                      - qwen3-0.6b
                       - --host
                       - 0.0.0.0
                       - --port
@@ -46,9 +80,6 @@ spec:
                       # CPU only feeds the GPU now; 4 threads is plenty.
                       - --threads
                       - "4"
-                  env:
-                      - name: LLAMA_CACHE
-                        value: /models
                   ports:
                       - containerPort: 8080
                   # First start downloads the model; allow up to 30 min.

@@ -26,7 +26,17 @@ From the website (webserver-rs pod), point any OpenAI client at
 
 ## Swapping models
 
-Change the `-hf <repo>:<quant>` arg in `deployment.yaml`. Sizing rule of thumb:
+Models are fetched by the `fetch-model` initContainer (plain curl + SHA-256
+verification — llama-server's built-in `-hf` downloader corrupted reads on this
+image and is deliberately not used). To swap, edit `deployment.yaml` in two
+places, keeping them consistent:
+
+1. the initContainer env: `MODEL_URL` (the HF `resolve/main` file URL),
+   `MODEL_SHA256` (shown on the file's HF page), `MODEL_FILE`;
+2. the `-m /models/<MODEL_FILE>` arg (and `--alias`).
+
+Old model files stay in `/var/mnt/models` — clean them up manually if disk
+matters. Sizing rule of thumb:
 GGUF file size + ~1–2 GB for KV cache/buffers must fit inside the pod memory
 limit, and the limit must fit inside the VM (currently 16 GB, shared with the
 control plane). On CPU, prefer small dense models (4–9B Q4) or small-MoE models.

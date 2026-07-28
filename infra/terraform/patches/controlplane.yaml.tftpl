@@ -7,6 +7,14 @@ machine:
     # keeps the qemu-guest-agent extension and matches our Talos version. Without
     # this the provider defaults to the plain installer (no extensions, older ver).
     image: factory.talos.dev/installer/${schematic_id}:${talos_version}
+  kubelet:
+    # Pin the kubelet's registered node IP to the LAN address. Without this it
+    # auto-picks among all interfaces each boot, and if the tailscale IP wins,
+    # kube-proxy (nftables mode) moves NodePorts there — breaking the
+    # cloudflared -> Traefik origin (2026-07-28 outage).
+    nodeIP:
+      validSubnets:
+        - ${node_ip}/32
   network:
     # Select the NIC by MAC (pulled from the Proxmox VM), not by name — Talos on
     # Proxmox names it "ens18", not "eth0", and this stays correct if that changes.

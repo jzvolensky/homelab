@@ -1,0 +1,6 @@
+# Managed by Ansible (infra/ansible/roles/proxmox_vfio) — do not edit by hand.
+options vfio-pci ids={{ vfio_pci_ids | join(',') }}
+{% for mod in vfio_blacklist_modules %}
+softdep {{ mod }} pre: vfio-pci
+blacklist {{ mod }}
+{% endfor %}
