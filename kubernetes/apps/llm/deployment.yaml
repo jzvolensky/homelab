@@ -66,22 +66,31 @@ spec:
                       - 0.0.0.0
                       - --port
                       - "8080"
-                      # 2.74 GB of weights leaves ~7 GB of GTT headroom, so this
-                      # can go a good deal higher if a workload needs it. Kept
-                      # modest because KV cache competes for the same memory
-                      # bandwidth that caps token generation on this iGPU.
+                      # TOTAL context across all slots, not per-slot: llama.cpp
+                      # divides this by --parallel. 131072 / 2 slots = 65536 each,
+                      # which is the target (verified: "n_ctx_slot = 65536").
+                      # Measured cost of this setting on the 780M: ~2.9 GB of
+                      # q8_0 KV cache (~23 MB per 1k tokens) on top of ~2.5 GB of
+                      # weights = ~5.5 GB of the 11.75 GB VRAM+GTT pool. Fits with
+                      # ~6 GB spare. Raising this further is a memory-bandwidth
+                      # tradeoff, not a capacity one — see --parallel below.
                       - --ctx-size
-                      - "32768"
+                      - "131072"
                       # Offload all layers to the iGPU.
                       - -ngl
                       - "99"
                       # CPU only feeds the GPU now; 4 threads is plenty.
                       - --threads
                       - "4"
-                      -
+                      # Two concurrent users, 65k each. Both slots are allocated
+                      # up front, so a second user costs nothing extra at idle.
+                      # Note the speed tradeoff at this context depth: measured
+                      # ~353 tok/s prefill, so a *cold* 65k prompt is ~3 min to
+                      # first token, and two users prefilling at once share the
+                      # one iGPU. Incremental turns are cheap — only new tokens
+                      # are processed — which is what --cache-ram protects.
                       - --parallel
                       - "2"
-                      -
                       - --cache-ram
                       - "3072"
                       # Use the model's real chat template. Required for correct
@@ -107,7 +116,11 @@ spec:
                       - q8_0
                       # Skip mmap so the weights aren't held in page cache in
                       # addition to the GTT copy. Matters on a RAM-tight guest.
-                      - --no-mmap
+                      # "none" is the replacement for the deprecated --no-mmap;
+                      # note that "mmap" is the *default*, so passing that here
+                      # would enable what this is meant to disable.
+                      - --load-mode
+                      - none
                   ports:
                       - containerPort: 8080
                   startupProbe:
