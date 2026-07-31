@@ -78,6 +78,12 @@ spec:
                       # CPU only feeds the GPU now; 4 threads is plenty.
                       - --threads
                       - "4"
+                      -
+                      - --parallel
+                      - "2"
+                      -
+                      - --cache-ram
+                      - "3072"
                       # Use the model's real chat template. Required for correct
                       # tool calling and for --chat-template-kwargs below.
                       - --jinja
