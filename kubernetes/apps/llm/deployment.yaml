@@ -71,7 +71,7 @@ spec:
                       # modest because KV cache competes for the same memory
                       # bandwidth that caps token generation on this iGPU.
                       - --ctx-size
-                      - "8192"
+                      - "32768"
                       # Offload all layers to the iGPU.
                       - -ngl
                       - "99"
