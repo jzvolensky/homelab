@@ -26,15 +26,12 @@ spec:
                   securityContext:
                       runAsUser: 0 # hostPath is root-owned
                   env:
-                      # To swap models: change these three AND the -m arg below.
-                      # (The old 0.6B smoke-test file stays on disk for a quick
-                      # revert: Qwen3-0.6B-Q8_0.gguf / sha 9465e63a22add5...)
                       - name: MODEL_URL
-                        value: https://huggingface.co/Qwen/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf
+                        value: https://huggingface.co/unsloth/Qwen3.5-4B-GGUF/resolve/main/Qwen3.5-4B-Q4_K_M.gguf
                       - name: MODEL_SHA256
-                        value: d98cdcbd03e17ce47681435b5150e34c1417f50b5c0019dd560e4882c5745785
+                        value: 00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4
                       - name: MODEL_FILE
-                        value: Qwen3-8B-Q4_K_M.gguf
+                        value: Qwen3.5-4B-Q4_K_M.gguf
                   command:
                       - sh
                       - -c
@@ -54,25 +51,25 @@ spec:
                         mountPath: /models
             containers:
                 - name: llama-server
-                  # Vulkan build targeting the passed-through Radeon 780M
-                  # (2 GB VRAM carve + ~10 GB GTT — models up to ~12 GB fit).
                   image: ghcr.io/ggml-org/llama.cpp:server-vulkan
-                  imagePullPolicy: IfNotPresent
+                  imagePullPolicy: Always
                   securityContext:
-                      # Simplest way to use /dev/dri on Talos; the namespace
-                      # is PSA-privileged already.
                       privileged: true
                   args:
                       # Model file staged by the fetch-model initContainer
                       # (see README.md "Swapping models").
                       - -m
-                      - /models/Qwen3-8B-Q4_K_M.gguf
+                      - /models/Qwen3.5-4B-Q4_K_M.gguf
                       - --alias
-                      - qwen3-8b
+                      - qwen3.5-4b
                       - --host
                       - 0.0.0.0
                       - --port
                       - "8080"
+                      # 2.74 GB of weights leaves ~7 GB of GTT headroom, so this
+                      # can go a good deal higher if a workload needs it. Kept
+                      # modest because KV cache competes for the same memory
+                      # bandwidth that caps token generation on this iGPU.
                       - --ctx-size
                       - "8192"
                       # Offload all layers to the iGPU.
@@ -81,9 +78,32 @@ spec:
                       # CPU only feeds the GPU now; 4 threads is plenty.
                       - --threads
                       - "4"
+                      # Use the model's real chat template. Required for correct
+                      # tool calling and for --chat-template-kwargs below.
+                      - --jinja
+                      # The Qwen3.5 small series (0.8B/2B/4B/9B) ships with
+                      # reasoning off by default, unlike the larger Qwen3.5
+                      # models and unlike the Qwen3-8B this replaced. Pinned
+                      # explicitly so the behaviour can't drift with a template
+                      # update. Set to true to get <think> blocks back.
+                      - --chat-template-kwargs
+                      - '{"enable_thinking":false}'
+                      # Flash attention: prerequisite for the quantized KV cache
+                      # below, and reduces attention memory traffic.
+                      - -fa
+                      - "on"
+                      # Halve KV cache bandwidth. If the server fails to load
+                      # with a cache-type error, drop these two pairs first —
+                      # they are the least essential flags here.
+                      - --cache-type-k
+                      - q8_0
+                      - --cache-type-v
+                      - q8_0
+                      # Skip mmap so the weights aren't held in page cache in
+                      # addition to the GTT copy. Matters on a RAM-tight guest.
+                      - --no-mmap
                   ports:
                       - containerPort: 8080
-                  # First start downloads the model; allow up to 30 min.
                   startupProbe:
                       httpGet:
                           path: /health
@@ -105,8 +125,6 @@ spec:
                           cpu: "1"
                           memory: 4Gi
                       limits:
-                          # Weights live in GPU GTT memory (not charged to the
-                          # pod cgroup); this covers load-time page cache + KV.
                           memory: 10Gi
                   volumeMounts:
                       - name: models
