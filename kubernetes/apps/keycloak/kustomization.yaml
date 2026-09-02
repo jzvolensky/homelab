@@ -10,6 +10,6 @@ resources:
     - keycloak-deployment.yaml
     - keycloak-service.yaml
     - ingress.yaml
-    # Uncomment once ./seal-secrets.sh has produced it against this cluster.
-    # Nothing starts without it: the database and Keycloak both read it.
-    # - secrets-sealed.yaml
+    # Produced by ./seal-secrets.sh against this cluster's key. Nothing starts
+    # without it: the database and Keycloak both read it.
+    - secrets-sealed.yaml
