@@ -84,15 +84,23 @@ spec:
                         value: Grappa
                       - name: GRAPPA_DESCRIPTION
                         value: An openEO backend implemented in Rust.
-                      # Authentication is off until an issuer is set: public
-                      # endpoints serve, /credentials/oidc advertises nothing,
-                      # and /me refuses. Point these at a realm to turn it on.
-                      # - name: GRAPPA_OIDC_ISSUER
-                      #   value: https://keycloak.example.org/realms/openeo
-                      # - name: GRAPPA_OIDC_ID
-                      #   value: keycloak
-                      # - name: GRAPPA_OIDC_TITLE
-                      #   value: Homelab Keycloak
+                      # Grappa is a resource server: it verifies the tokens this
+                      # realm issues and never runs a login flow. The issuer must
+                      # be byte-identical to the `iss` claim Keycloak mints, which
+                      # is why it is the public URL and not the in-cluster
+                      # Service — discovery and JWKS hairpin out through
+                      # Cloudflare and back, cached for an hour, so it is one
+                      # request per hour rather than per token.
+                      #
+                      # No GRAPPA_OIDC_AUDIENCE: a Keycloak access token's `aud`
+                      # is not the client id unless an audience mapper is added,
+                      # so setting it without one rejects every token.
+                      - name: GRAPPA_OIDC_ISSUER
+                        value: https://keycloak.jzvolensky.com/realms/openeo
+                      - name: GRAPPA_OIDC_ID
+                        value: keycloak
+                      - name: GRAPPA_OIDC_TITLE
+                        value: Homelab Keycloak
                   livenessProbe:
                       httpGet:
                           path: /.well-known/openeo
