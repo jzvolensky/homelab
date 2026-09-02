@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: grappa
+    namespace: openeo
+spec:
+    # One pod, serving HTTP and running queued jobs in-process.
+    #
+    # Not the chart's API + dispatcher split, deliberately: job results are
+    # written to a filesystem and read back by whoever serves the download, so
+    # splitting them needs a volume both pods can see. ReadWriteOnce on a single
+    # node would technically allow that, but one pod is the honest shape until
+    # there is an object store. Scaling out needs that store, not more replicas.
+    replicas: 1
+    # Recreate: ReadWriteOnce, so the old pod must release the volume first.
+    strategy:
+        type: Recreate
+    selector:
+        matchLabels:
+            app: grappa
+    template:
+        metadata:
+            labels:
+                app: grappa
+        spec:
+            # Nothing here talks to the Kubernetes API. When execution.mode
+            # moves to `kubernetes`, the dispatcher that does gets its own
+            # ServiceAccount and Role — this pod still gets neither.
+            automountServiceAccountToken: false
+            securityContext:
+                runAsNonRoot: true
+                runAsUser: 65532
+                runAsGroup: 65532
+                # The results volume arrives root-owned; without this the
+                # distroless nonroot user cannot write to it and the store's
+                # startup write probe fails the pod.
+                fsGroup: 65532
+                seccompProfile:
+                    type: RuntimeDefault
+            containers:
+                - name: grappa
+                  # Pin to :sha-<commit> once the images have built; :main moves
+                  # under you, which is not what a cluster should track.
+                  image: ghcr.io/jzvolensky/openeo-grappa-driver:main
+                  imagePullPolicy: Always
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      readOnlyRootFilesystem: true
+                      capabilities:
+                          drop: [ALL]
+                  ports:
+                      - name: http
+                        containerPort: 8080
+                  env:
+                      - name: DATABASE_URL
+                        valueFrom:
+                            secretKeyRef:
+                                name: grappa-db
+                                key: url
+                      # Every absolute link in the capabilities document, the
+                      # collection listing and job responses is built from this,
+                      # so it must be the URL clients actually reach — the LAN
+                      # ingress, port and all. Change it with ingress.yaml, never
+                      # separately.
+                      - name: GRAPPA_PUBLIC_URL
+                        value: http://openeo.home.arpa:30080
+                      # One replica and no Helm release hook, so the pod is the
+                      # only thing that can apply migrations. It crash-loops
+                      # until postgres answers, which is the intended behaviour.
+                      - name: GRAPPA_RUN_MIGRATIONS
+                        value: "true"
+                      # Jobs run inside this pod. `kubernetes` needs the
+                      # executor to reach shared result storage first — see
+                      # README.md.
+                      - name: GRAPPA_EXECUTOR
+                        value: inprocess
+                      - name: GRAPPA_WORKER_CONCURRENCY
+                        value: "2"
+                      - name: GRAPPA_RESULT_DIR
+                        value: /data/results
+                      - name: GRAPPA_PRODUCTION
+                        value: "false"
+                      - name: GRAPPA_TITLE
+                        value: Grappa
+                      - name: GRAPPA_DESCRIPTION
+                        value: An openEO backend implemented in Rust.
+                      # Authentication is off until an issuer is set: public
+                      # endpoints serve, /credentials/oidc advertises nothing,
+                      # and /me refuses. Point these at a realm to turn it on.
+                      # - name: GRAPPA_OIDC_ISSUER
+                      #   value: https://keycloak.example.org/realms/openeo
+                      # - name: GRAPPA_OIDC_ID
+                      #   value: keycloak
+                      # - name: GRAPPA_OIDC_TITLE
+                      #   value: Homelab Keycloak
+                  livenessProbe:
+                      httpGet:
+                          path: /.well-known/openeo
+                          port: http
+                      initialDelaySeconds: 5
+                      periodSeconds: 20
+                  readinessProbe:
+                      httpGet:
+                          path: /.well-known/openeo
+                          port: http
+                      initialDelaySeconds: 2
+                      periodSeconds: 10
+                  resources:
+                      requests:
+                          cpu: 100m
+                          memory: 128Mi
+                      limits:
+                          memory: 512Mi
+                  volumeMounts:
+                      - name: results
+                        mountPath: /data/results
+                      # readOnlyRootFilesystem is on, so anything that writes
+                      # needs a volume of its own.
+                      - name: tmp
+                        mountPath: /tmp
+            volumes:
+                - name: results
+                  persistentVolumeClaim:
+                      claimName: grappa-results
+                - name: tmp
+                  emptyDir: {}

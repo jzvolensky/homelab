@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: local-path-provisioner
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+
+spec:
+    project: default
+
+    source:
+        # No published Helm repo for this chart; Argo renders it from the tag.
+        repoURL: https://github.com/rancher/local-path-provisioner.git
+        targetRevision: v0.0.37 # check https://github.com/rancher/local-path-provisioner/releases
+        path: deploy/chart/local-path-provisioner
+        helm:
+            valuesObject:
+                # Talos: everything outside /var is immutable, and the kubelet
+                # already binds /var/mnt (machine.kubelet.extraMounts, see
+                # kubernetes/apps/README.md). Anywhere else and volume creation
+                # fails with "read-only file system".
+                nodePathMap:
+                    - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+                      paths:
+                          - /var/mnt/local-path-provisioner
+
+                storageClass:
+                    defaultClass: true
+                    name: local-path
+                    # Retain, not Delete: deleting a PVC should not be what
+                    # destroys a database. The directory is left on the node for
+                    # a human to remove.
+                    reclaimPolicy: Retain
+
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: local-path-storage
+
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true
+            - ApplyOutOfSyncOnly=true
+            - RespectIgnoreDifferences=true

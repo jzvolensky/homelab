@@ -9,3 +9,5 @@ resources:
     - webserver/application.yaml # website
     - llm/application.yaml # llama.cpp OpenAI-compatible LLM server (GPU/Vulkan)
     - openwebui/application.yaml # authenticated chat UI for the llm app
+    - local-path-provisioner # directory: namespace carries a PSS label CreateNamespace cannot set
+    - openeo/application.yaml # openEO API backend (Grappa) + its PostgreSQL

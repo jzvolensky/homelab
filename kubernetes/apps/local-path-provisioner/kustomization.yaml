@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# The namespace is applied by the root app rather than by CreateNamespace,
+# because it carries a Pod Security label the sync option cannot set.
+resources:
+    - namespace.yaml
+    - application.yaml

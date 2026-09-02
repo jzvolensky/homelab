@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# One resource per file, as elsewhere in this repo.
+resources:
+    - namespace.yaml
+    - postgres-pvc.yaml
+    - postgres-deployment.yaml
+    - postgres-service.yaml
+    - grappa-pvc.yaml
+    - grappa-deployment.yaml
+    - grappa-service.yaml
+    - ingress.yaml
+    # Uncomment once ./seal-db-secret.sh has produced it against this cluster.
+    - db-sealedsecret.yaml

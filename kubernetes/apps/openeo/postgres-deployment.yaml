@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: postgres
+    namespace: openeo
+spec:
+    replicas: 1
+    # Recreate: a ReadWriteOnce volume cannot be held by the old and new pod at
+    # once, and two postgres processes on one data directory is data loss.
+    strategy:
+        type: Recreate
+    selector:
+        matchLabels:
+            app: postgres
+    template:
+        metadata:
+            labels:
+                app: postgres
+        spec:
+            containers:
+                - name: postgres
+                  image: postgres:16-alpine
+                  ports:
+                      - containerPort: 5432
+                  env:
+                      - name: POSTGRES_USER
+                        value: grappa
+                      - name: POSTGRES_DB
+                        value: grappa
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: grappa-db
+                                key: password
+                      # A subdirectory, not the mount root: initdb refuses a
+                      # directory it did not create empty, and a volume root can
+                      # arrive with entries of its own.
+                      - name: PGDATA
+                        value: /var/lib/postgresql/data/pgdata
+                  volumeMounts:
+                      - name: data
+                        mountPath: /var/lib/postgresql/data
+                  readinessProbe:
+                      exec:
+                          command: ["pg_isready", "-U", "grappa", "-d", "grappa"]
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                  livenessProbe:
+                      exec:
+                          command: ["pg_isready", "-U", "grappa", "-d", "grappa"]
+                      initialDelaySeconds: 30
+                      periodSeconds: 30
+                  resources:
+                      requests:
+                          cpu: 100m
+                          memory: 256Mi
+                      limits:
+                          memory: 1Gi
+            volumes:
+                - name: data
+                  persistentVolumeClaim:
+                      claimName: postgres-data

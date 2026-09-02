@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: local-path-storage
+    labels:
+        # The provisioner creates each volume with a short-lived helper pod that
+        # mounts the node's filesystem, which baseline PSS forbids.
+        pod-security.kubernetes.io/enforce: privileged

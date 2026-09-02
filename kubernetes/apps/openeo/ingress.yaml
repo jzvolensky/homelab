@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: grappa
+    namespace: openeo
+    annotations:
+        # `web` only. There is no certificate for a .home.arpa name, and this
+        # host is deliberately not one the Cloudflare tunnel routes — the tunnel
+        # maps specific public hostnames, so nothing here reaches the internet.
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+    ingressClassName: traefik
+    rules:
+        # Point this name at the node (192.168.1.250) in /etc/hosts or your
+        # router's DNS. Traefik matches the host without the port, so the
+        # :30080 NodePort suffix does not need to appear here.
+        - host: openeo.home.arpa
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: grappa
+                            port:
+                                number: 8080

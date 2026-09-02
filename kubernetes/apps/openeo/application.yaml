@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: openeo
+    namespace: argocd
+    finalizers:
+        - resources-finalizer.argocd.argoproj.io
+spec:
+    project: default
+    source:
+        repoURL: https://github.com/jzvolensky/homelab.git
+        targetRevision: main
+        path: kubernetes/apps/openeo
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: openeo
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+            - CreateNamespace=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true
+            - ApplyOutOfSyncOnly=true
+            - RespectIgnoreDifferences=true
