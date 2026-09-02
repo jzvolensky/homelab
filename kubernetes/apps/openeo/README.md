@@ -4,19 +4,28 @@
 backend in Rust — plus the PostgreSQL it keeps jobs, logs and result metadata in.
 
 LAN only. The Ingress answers on Traefik's `web` entrypoint, which is a
-NodePort, so the URL carries the port:
+NodePort, so the URL carries the port — and nothing has to be configured on any
+device to reach it:
 
 ```bash
-# once, on each machine that should reach it (or in your router's DNS)
-echo '192.168.1.250 openeo.home.arpa' | sudo tee -a /etc/hosts
-
-curl -s http://openeo.home.arpa:30080/.well-known/openeo
-curl -s http://openeo.home.arpa:30080/openeo/1.3.0/ | jq .
+curl -s http://192.168.1.250.nip.io:30080/.well-known/openeo
+curl -s http://192.168.1.250.nip.io:30080/openeo/1.3.0/ | jq .
 ```
 
-The Cloudflare tunnel routes specific public hostnames to specific Services;
-`openeo.home.arpa` is not one of them, so this stays on the network. `.home.arpa`
-is the reserved name for exactly this (RFC 8375) and will never resolve publicly.
+`nip.io` is public wildcard DNS that maps `<ip>.nip.io` to `<ip>`, so this
+resolves from a phone, a laptop, anywhere — with no `/etc/hosts` entry and no
+router record. The address it resolves to is private, so only something already
+on this network can reach it, and the Cloudflare tunnel routes named public
+hostnames to Services rather than forwarding by IP — this is not one of them.
+
+Two things to know. A resolver with DNS-rebinding protection (dnsmasq's
+`stop-dns-rebind`, some Pi-hole and ISP configurations) drops answers pointing
+at RFC 1918 addresses, which is exactly what nip.io returns; if
+`dig +short 192.168.1.250.nip.io` is empty on your network, that is why.
+`sslip.io` is a drop-in replacement with the same format, and a local DNS record
+on the router is the answer that depends on nobody. And the name contains the
+node's IP, so changing that IP means changing the host here and
+`GRAPPA_PUBLIC_URL` with it.
 
 `GRAPPA_PUBLIC_URL` in `grappa-deployment.yaml` must equal that origin, port
 included: every absolute link the API returns is built from it, and an openEO

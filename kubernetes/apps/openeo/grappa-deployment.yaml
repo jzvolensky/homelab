@@ -63,7 +63,7 @@ spec:
                       # ingress, port and all. Change it with ingress.yaml, never
                       # separately.
                       - name: GRAPPA_PUBLIC_URL
-                        value: http://openeo.home.arpa:30080
+                        value: http://openeo.192.168.1.250.nip.io:30080
                       # One replica and no Helm release hook, so the pod is the
                       # only thing that can apply migrations. It crash-loops
                       # until postgres answers, which is the intended behaviour.
