@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# One resource per file, as elsewhere in this repo.
+resources:
+    - namespace.yaml
+    - postgres-pvc.yaml
+    - postgres-deployment.yaml
+    - postgres-service.yaml
+    - realm-configmap.yaml
+    - keycloak-deployment.yaml
+    - keycloak-service.yaml
+    - ingress.yaml
+    # Uncomment once ./seal-secrets.sh has produced it against this cluster.
+    # Nothing starts without it: the database and Keycloak both read it.
+    # - secrets-sealed.yaml

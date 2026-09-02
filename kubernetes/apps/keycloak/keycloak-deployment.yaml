@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: keycloak
+    namespace: keycloak
+spec:
+    replicas: 1
+    # Recreate: one replica, and a rolling update would run two instances
+    # against one database during a schema upgrade, which Keycloak does not
+    # support without an explicit rolling-upgrade-capable version pair.
+    strategy:
+        type: Recreate
+    selector:
+        matchLabels:
+            app: keycloak
+    template:
+        metadata:
+            labels:
+                app: keycloak
+        spec:
+            automountServiceAccountToken: false
+            securityContext:
+                runAsNonRoot: true
+                # The Keycloak image's own user.
+                runAsUser: 1000
+                runAsGroup: 1000
+                seccompProfile:
+                    type: RuntimeDefault
+            containers:
+                - name: keycloak
+                  image: quay.io/keycloak/keycloak:26.7.1
+                  # `start`, not `start-dev`: production mode, backed by
+                  # PostgreSQL. Without --optimized Keycloak re-runs its build
+                  # step on boot when configuration changed, which is why the
+                  # startup probe below is patient.
+                  args: ["start", "--import-realm"]
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                          drop: [ALL]
+                      # NOT read-only: the build step writes into the image's
+                      # own quarkus directory. Making it read-only fails the
+                      # boot rather than hardening anything.
+                      readOnlyRootFilesystem: false
+                  ports:
+                      - name: http
+                        containerPort: 8080
+                      - name: management
+                        containerPort: 9000
+                  env:
+                      - name: KC_DB
+                        value: postgres
+                      - name: KC_DB_URL
+                        value: jdbc:postgresql://postgres:5432/keycloak
+                      - name: KC_DB_USERNAME
+                        value: keycloak
+                      - name: KC_DB_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: keycloak-secrets
+                                key: db-password
+                      # The canonical public origin. Keycloak builds every
+                      # issuer, redirect and metadata URL from it, and a token's
+                      # `iss` claim is this value — which is what a resource
+                      # server checks. It must match the ingress host exactly.
+                      - name: KC_HOSTNAME
+                        value: https://keycloak.jzvolensky.com
+                      # TLS terminates at Cloudflare, so Keycloak serves plain
+                      # HTTP and learns the real scheme from the proxy headers.
+                      # Without this it issues http:// URLs and login loops.
+                      - name: KC_HTTP_ENABLED
+                        value: "true"
+                      - name: KC_PROXY_HEADERS
+                        value: xforwarded
+                      # Health endpoints live on the management port (9000)
+                      # since Keycloak 25.
+                      - name: KC_HEALTH_ENABLED
+                        value: "true"
+                      # Creates the first admin only when none exists; changing
+                      # these later does not rotate the password.
+                      - name: KC_BOOTSTRAP_ADMIN_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: keycloak-secrets
+                                key: admin-username
+                      - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: keycloak-secrets
+                                key: admin-password
+                  volumeMounts:
+                      - name: realm
+                        mountPath: /opt/keycloak/data/import
+                        readOnly: true
+                  startupProbe:
+                      httpGet:
+                          path: /health/started
+                          port: management
+                      periodSeconds: 5
+                      # Generous: first boot runs the build, applies the schema
+                      # and imports the realm before it answers anything.
+                      failureThreshold: 60
+                  readinessProbe:
+                      httpGet:
+                          path: /health/ready
+                          port: management
+                      periodSeconds: 10
+                  livenessProbe:
+                      httpGet:
+                          path: /health/live
+                          port: management
+                      periodSeconds: 30
+                  resources:
+                      requests:
+                          cpu: 250m
+                          memory: 768Mi
+                      limits:
+                          memory: 2Gi
+            volumes:
+                - name: realm
+                  configMap:
+                      name: realm-openeo

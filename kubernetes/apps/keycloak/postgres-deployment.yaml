@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: postgres
+    namespace: keycloak
+spec:
+    replicas: 1
+    # Recreate: a ReadWriteOnce volume cannot be held by two pods, and two
+    # postgres processes on one data directory is data loss.
+    strategy:
+        type: Recreate
+    selector:
+        matchLabels:
+            app: postgres
+    template:
+        metadata:
+            labels:
+                app: postgres
+        spec:
+            containers:
+                - name: postgres
+                  image: postgres:16-alpine
+                  ports:
+                      - containerPort: 5432
+                  env:
+                      - name: POSTGRES_USER
+                        value: keycloak
+                      - name: POSTGRES_DB
+                        value: keycloak
+                      - name: POSTGRES_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: keycloak-secrets
+                                key: db-password
+                      - name: PGDATA
+                        value: /var/lib/postgresql/data/pgdata
+                  volumeMounts:
+                      - name: data
+                        mountPath: /var/lib/postgresql/data
+                  readinessProbe:
+                      exec:
+                          command: ["pg_isready", "-U", "keycloak", "-d", "keycloak"]
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                  livenessProbe:
+                      exec:
+                          command: ["pg_isready", "-U", "keycloak", "-d", "keycloak"]
+                      initialDelaySeconds: 30
+                      periodSeconds: 30
+                  resources:
+                      requests:
+                          cpu: 100m
+                          memory: 256Mi
+                      limits:
+                          memory: 1Gi
+            volumes:
+                - name: data
+                  persistentVolumeClaim:
+                      claimName: postgres-data

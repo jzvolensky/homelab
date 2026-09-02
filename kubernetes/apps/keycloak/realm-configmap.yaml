@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: realm-openeo
+    namespace: keycloak
+# Imported once at first boot (`--import-realm`). Keycloak skips a realm that
+# already exists, so this is a bootstrap, not a source of truth: once the realm
+# is live it is managed in the admin console, and edits here do not travel.
+#
+# No users on purpose. A username and password committed to a public repo is not
+# something a public hostname should be pointed at; create yours in the console.
+data:
+    realm-openeo.json: |
+        {
+          "realm": "openeo",
+          "enabled": true,
+          "displayName": "openEO",
+          "registrationAllowed": false,
+          "resetPasswordAllowed": true,
+          "loginWithEmailAllowed": true,
+          "sslRequired": "external",
+          "accessTokenLifespan": 900,
+          "clients": [
+            {
+              "clientId": "openeo-cli",
+              "name": "openEO clients",
+              "description": "Public client for the openEO Python/R/JS clients, the Web Editor and scripted tests.",
+              "enabled": true,
+              "protocol": "openid-connect",
+              "publicClient": true,
+              "standardFlowEnabled": true,
+              "directAccessGrantsEnabled": true,
+              "serviceAccountsEnabled": false,
+              "implicitFlowEnabled": false,
+              "attributes": {
+                "oauth2.device.authorization.grant.enabled": "true",
+                "pkce.code.challenge.method": "S256"
+              },
+              "redirectUris": [
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://editor.openeo.org/*"
+              ],
+              "webOrigins": [
+                "+"
+              ]
+            }
+          ]
+        }
