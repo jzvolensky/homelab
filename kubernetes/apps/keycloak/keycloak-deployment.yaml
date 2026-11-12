@@ -28,7 +28,7 @@ spec:
                     type: RuntimeDefault
             containers:
                 - name: keycloak
-                  image: quay.io/keycloak/keycloak:26.7.1
+                  image: quay.io/keycloak/keycloak:26.8.2
                   # `start`, not `start-dev`: production mode, backed by
                   # PostgreSQL. Without --optimized Keycloak re-runs its build
                   # step on boot when configuration changed, which is why the
