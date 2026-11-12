@@ -19,7 +19,7 @@ BIN="${HOME}/.local/bin"
 mkdir -p "$BIN"
 
 # Pin versions — bump deliberately. Keep TERRAFORM/TALOS in sync with infra/terraform.
-TERRAFORM_VERSION="1.10.5"
+TERRAFORM_VERSION="1.17.2"
 TALOS_VERSION="v1.14.6" # keep in sync with talos_version in terraform.tfvars
 
 arch="amd64"
