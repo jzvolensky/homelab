@@ -55,6 +55,7 @@
   "packageRules": [
     {
       "description": "Talos: one PR for all pins, with a reminder that the node upgrade is manual",
+      "matchManagers": ["custom.regex"],
       "matchPackageNames": ["siderolabs/talos"],
       "groupName": "Talos",
       "prBodyNotes": [
