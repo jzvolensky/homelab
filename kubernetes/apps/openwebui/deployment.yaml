@@ -19,7 +19,7 @@ spec:
             containers:
                 - name: openwebui
                   # Moving tag; pin to a release tag if an update breaks things.
-                  image: ghcr.io/open-webui/open-webui:main
+                  image: ghcr.io/open-webui/open-webui:main@sha256:59b912d4246103c7285de0e9a5f2f6586614c06b4c4e46edc51a8f29e7b099a5
                   imagePullPolicy: IfNotPresent
                   env:
                       # Backend: the cluster llama-server (OpenAI-compatible).

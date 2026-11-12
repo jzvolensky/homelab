@@ -22,7 +22,7 @@ spec:
             # correct while the loader failed on it).
             initContainers:
                 - name: fetch-model
-                  image: curlimages/curl:latest
+                  image: curlimages/curl:latest@sha256:3fb7e13e5d179a845c97d78204f3f1064d1907037f26a3ebf91710571151fd93
                   securityContext:
                       runAsUser: 0 # hostPath is root-owned
                   env:
@@ -51,7 +51,7 @@ spec:
                         mountPath: /models
             containers:
                 - name: llama-server
-                  image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+                  image: ghcr.io/ggml-org/llama.cpp:server-vulkan@sha256:4bce66a7831e1d396f49d433eb738b9ef1edc20002f5a0d5099b15282d01d13f
                   imagePullPolicy: Always
                   securityContext:
                       privileged: true
