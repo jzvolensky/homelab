@@ -13,9 +13,9 @@ vm_datastore   = "local-lvm"
 network_bridge = "vmbr0"
 
 # --- Talos image ---
-talos_version = "v1.9.5"
+talos_version = "v1.14.6"
 # Regenerate at https://factory.talos.dev if you want more system extensions.
-talos_schematic_id = "ce4c980550dd2ab1b17bbf2b08801c7eb59418eafe8f279833297925d67c7515"
+talos_schematic_id = "f11afbd117671ca02048b2230f9fec5a9ca54cf02ffc689eaedcf1f642daeb80"
 
 # --- VM sizing ---
 vm_id        = 200

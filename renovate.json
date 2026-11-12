@@ -1,0 +1,93 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitsDisabled"],
+  "schedule": ["before 8am on saturday"],
+  "prConcurrentLimit": 10,
+  "labels": ["renovate"],
+
+  "kubernetes": {
+    "managerFilePatterns": ["/^kubernetes/.+\\.ya?ml$/"]
+  },
+  "argocd": {
+    "managerFilePatterns": ["/^kubernetes/.+\\.ya?ml$/"]
+  },
+
+  "customManagers": [
+    {
+      "description": "Talos version pins (talosctl client + tfvars example). Merging does NOT upgrade the node — see docs/08-upgrading.md",
+      "customType": "regex",
+      "managerFilePatterns": ["/^scripts/install-tools\\.sh$/", "/^infra/terraform/terraform\\.tfvars\\.example$/"],
+      "matchStrings": [
+        "TALOS_VERSION=\"(?<currentValue>v[^\"]+)\"",
+        "talos_version\\s*=\\s*\"(?<currentValue>v[^\"]+)\""
+      ],
+      "depNameTemplate": "siderolabs/talos",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "Terraform CLI pin in install-tools.sh",
+      "customType": "regex",
+      "managerFilePatterns": ["/^scripts/install-tools\\.sh$/"],
+      "matchStrings": ["TERRAFORM_VERSION=\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "hashicorp/terraform",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    },
+    {
+      "description": "Argo CD install version used by the Ansible bootstrap",
+      "customType": "regex",
+      "managerFilePatterns": ["/^infra/ansible/bootstrap\\.yml$/"],
+      "matchStrings": ["argocd_version:\\s*\"(?<currentValue>v[^\"]+)\""],
+      "depNameTemplate": "argoproj/argo-cd",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "sealed-secrets controller version used by the Ansible bootstrap",
+      "customType": "regex",
+      "managerFilePatterns": ["/^infra/ansible/bootstrap\\.yml$/"],
+      "matchStrings": ["sealed_secrets_version:\\s*\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "bitnami-labs/sealed-secrets",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "description": "Talos: one PR for all pins, with a reminder that the node upgrade is manual",
+      "matchPackageNames": ["siderolabs/talos"],
+      "groupName": "Talos",
+      "prBodyNotes": [
+        "⚠️ This only bumps version pins. Upgrade the node by hand with the **factory installer + our schematic** — see `docs/08-upgrading.md`."
+      ]
+    },
+    {
+      "description": "Postgres major upgrades need a dump/restore — never bump the major automatically",
+      "matchPackageNames": ["postgres"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Pin floating third-party tags (:main, :latest, :server-vulkan) to digests so updates arrive as PRs instead of on every pod restart",
+      "matchDatasources": ["docker"],
+      "matchCurrentValue": "/^(main|latest|server-vulkan)$/",
+      "pinDigests": true
+    },
+    {
+      "description": "Our own images are built by CI on push — keep them floating, no PRs",
+      "matchPackageNames": ["ghcr.io/jzvolensky/**"],
+      "enabled": false
+    },
+    {
+      "description": "Batch all digest bumps into one weekly PR (llama.cpp / open-webui publish daily)",
+      "matchUpdateTypes": ["digest", "pinDigest"],
+      "groupName": "image digests"
+    },
+    {
+      "description": "Low-risk dev tooling: auto-merge minor/patch",
+      "matchManagers": ["github-actions", "pep621"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    }
+  ]
+}

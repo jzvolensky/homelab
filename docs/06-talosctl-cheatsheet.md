@@ -99,9 +99,9 @@ Full workflow: `infra/talos/extension-services/README.md`.
 
 ```bash
 # Upgrade Talos itself — ALWAYS use the FACTORY installer with your schematic,
-# else you lose extensions (see docs/02). --preserve keeps etcd on this single node.
+# else you lose extensions (see docs/08). --preserve keeps etcd on this single node.
 talosctl upgrade --preserve \
-  --image factory.talos.dev/installer/f11afbd117671ca02048b2230f9fec5a9ca54cf02ffc689eaedcf1f642daeb80:v1.13.5
+  --image factory.talos.dev/installer/f11afbd117671ca02048b2230f9fec5a9ca54cf02ffc689eaedcf1f642daeb80:v1.14.6
 
 # Upgrade the Kubernetes version (separate from Talos):
 talosctl upgrade-k8s --to 1.36.0

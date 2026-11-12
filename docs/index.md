@@ -42,5 +42,6 @@ Proxmox VM ─ Talos (single node) ─ Kubernetes
 - :material-puzzle: **[Talos Extensions](05-talos-extensions.md)** — tailscale / cloudflared as node services
 - :material-console: **[talosctl Cheatsheet](06-talosctl-cheatsheet.md)** — day-2 commands
 - :material-expansion-card: **[iGPU Passthrough](07-igpu-passthrough.md)** — Radeon 780M → VM → `/dev/dri` for LLM inference
+- :material-update: **[Upgrading](08-upgrading.md)** — talosctl, Talos OS & Kubernetes upgrades, and what breaks here
 
 </div>
