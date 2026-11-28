@@ -13,7 +13,7 @@ vm_datastore   = "local-lvm"
 network_bridge = "vmbr0"
 
 # --- Talos image ---
-talos_version = "v1.14.6"
+talos_version = "v1.14.7"
 # Regenerate at https://factory.talos.dev if you want more system extensions.
 talos_schematic_id = "f11afbd117671ca02048b2230f9fec5a9ca54cf02ffc689eaedcf1f642daeb80"
 
