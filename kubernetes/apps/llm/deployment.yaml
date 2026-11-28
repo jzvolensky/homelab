@@ -51,7 +51,7 @@ spec:
                         mountPath: /models
             containers:
                 - name: llama-server
-                  image: ghcr.io/ggml-org/llama.cpp:server-vulkan@sha256:4bce66a7831e1d396f49d433eb738b9ef1edc20002f5a0d5099b15282d01d13f
+                  image: ghcr.io/ggml-org/llama.cpp:server-vulkan@sha256:a4911a324843555ff09cd403f21ba314a78a1aa5f515a145774465161f168a7a
                   imagePullPolicy: Always
                   securityContext:
                       privileged: true
